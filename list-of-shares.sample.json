@@ -1,0 +1,50 @@
+[
+  {
+    "id": "user2user",
+    "file_id": 1234,
+    "owner": "johndoe",
+    "initiator": "johndoe",
+    "permissions": 1,
+    "path": "\/Readme.md",
+    "name": "Readme.md",
+    "is_directory": false,
+    "type": "user",
+    "recipient": "notjohndoe"
+  },
+  {
+    "id": "user2group",
+    "file_id": 5678,
+    "owner": "johndoe",
+    "initiator": "johndoe",
+    "permissions": 1,
+    "path": "\/Readme.md",
+    "name": "Readme.md",
+    "is_directory": false,
+    "type": "group",
+    "recipient": "groupofjohndoe"
+  },
+  {
+    "id": "user2link",
+    "file_id": 9101,
+    "owner": "johndoe",
+    "initiator": "johndoe",
+    "permissions": 1,
+    "path": "\/Example.md",
+    "name": "Example.md",
+    "is_directory": false,
+    "type": "link",
+    "token": "thisisanawesomelink"
+  },
+  {
+    "id": "otheruser",
+    "file_id": 1121,
+    "owner": "notjohndoe",
+    "initiator": "notjohndoe",
+    "permissions": 1,
+    "path": "\/Example.md",
+    "name": "Example.md",
+    "is_directory": false,
+    "type": "user",
+    "token": "johndoe"
+  }
+]
