@@ -53,12 +53,21 @@ def create_share(path: str, plainType: str, shareWith: Optional[str], permission
         'sendMail': "false" if plainType == "email" else None
     }
 
+    debugPrint(createShareUrl, postArgs)
+
     createShareReq = requests.post(createShareUrl, json=postArgs, headers={"OCS-APIRequest": "true"}, auth=(globalUser.Username, globalUser.Password))
 
-    debugPrint(f"[{createShareReq.status_code}] {createShareReq.text}")
+    match createShareReq.status_code:
+        case 200:
+            print("\033[32;1mOK!\033[0;0m")
+        case _:
+            print("\033[31;1mFAIL!\033[0;0m")
 
-    if plainType == "link" and token is not None:
-        debugPrint("Applying custom token for the shared link")
+
+    debugPrint(createShareReq.text)
+
+    if (plainType == "link" or plainType == "email") and token is not None:
+        print(" -> Applying custom token for the shared link...", flush=True, end=("" if globalUser.Debug else "\n"))
 
         tree = ET.fromstring(createShareReq.text)
         shareID = tree.find("data/id").text
@@ -80,7 +89,13 @@ def create_share(path: str, plainType: str, shareWith: Optional[str], permission
 
         editTokenReq = requests.put(customTokenURL, json=customTokenArgs, headers={"OCS-APIRequest": "true"}, auth=(globalUser.Username, globalUser.Password))
 
-        debugPrint(f"[{editTokenReq.status_code}] {editTokenReq.text}")
+        match createShareReq.status_code:
+            case 200:
+                print("\033[32;1mOK!\033[0;0m")
+            case _:
+                print("\033[31;1mFAIL!\033[0;0m")
+
+        debugPrint(editTokenReq.text)
 
     return
 
@@ -132,8 +147,8 @@ def main():
 
     for share in shareDict:
         if share["initiator"] == globalUser.Username:
-            print(f">>> Migrating shared file '{share["path"]}' in {share["type"]} mode...")
-            debugPrint(f"Properties: path={share["path"]} ; plainType={share["type"]}, shareWith={share["recipient"] if "recipient" in share else "<not provided>"}, permissions={share["permissions"]}, token={share["token"] if "token" in share else "<not provided>"}\n")
+            print(f">>> Migrating shared file '{share["path"]}' in {share["type"]} mode...", flush=True, end=("" if globalUser.Debug else "\n"))
+            debugPrint(f"Properties: path={share["path"]} ; plainType={share["type"]}, shareWith={share["recipient"] if "recipient" in share else "<not provided>"}, permissions={share["permissions"]}, token={share["token"] if "token" in share else "<not provided>"}")
             create_share(share["path"], share["type"], share["recipient"] if share["type"] != "link" else None, share["permissions"], share["token"] if share["type"] == "link" else None)
         else:
             debugPrint(f"Skipping shared file '{share["path"]}' as it is not initiated by logged in user ({share["initiator"]})")
