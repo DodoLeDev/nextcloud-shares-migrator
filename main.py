@@ -103,7 +103,7 @@ def create_share(path: str, plainType: str, shareWith: Optional[str], permission
             'shareType': typeDict[plainType],
             'shareWith': shareWith,
             'permissions': permissions,
-            'sendMail': "false" if plainType == "email" else None
+            'sendMail': "false"
         }
 
         debugPrint("POST>", createShareUrl, postArgs)
@@ -286,6 +286,7 @@ def main():
                     if shouldIcontinue == "": shouldIcontinue = "Y"
                     match shouldIcontinue.lower()[0]:
                         case 'n':
+                            failedList.append(share)
                             continue
                         case 'a':
                             skipNext = True
