@@ -29,7 +29,9 @@ def main():
     parser.add_argument('-v', '--verbose',
                         action='store_true', help='Toggles verbose mode')
     parser.add_argument('-d', '--dry-run',
-                        action='store_true', help='Display requests without sending them')
+                        action='store_true', help='Count shares without saving them into files')
+    parser.add_argument('-D', '--mkdir',
+                        action='store_true', help='Create directories for output_pattern if necessary')
 
     args = parser.parse_args()
 
@@ -67,10 +69,13 @@ def main():
     print("\033[1m<== Statistics ==>\033[0m")
     for user in userSharesDict.keys():
         print(f"> \033[36m{user}\033[0m: {len(userSharesDict[user])} shares")
-
-        userFileObj = get_nonoverlapping_file(filenamePattern.replace('%username%', user))
-        with open(userFileObj, "w") as f:
-            json.dump(userSharesDict[user], f, indent=2)
-            debugPrint("Shares saved!")
+        if not args.dry_run:
+            userFileObj = get_nonoverlapping_file(filenamePattern.replace('%username%', user))
+            if args.mkdir:
+                debugPrint("Creating directories if necessary")
+                userFileObj.parent.mkdir(exist_ok=True, parents=True)
+            with open(userFileObj, "w") as f:
+                json.dump(userSharesDict[user], f, indent=2)
+                debugPrint("Shares saved!")
 
 main()
