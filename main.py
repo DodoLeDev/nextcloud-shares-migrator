@@ -86,15 +86,8 @@ def find_share_by_props(
         return None
 
 def check_share(share: dict, shareList: list[Element]) -> bool:
-    matchingItem: Optional[Element] = find_share_by_props(shareList, token=share["token"])
-    if matchingItem is None:
-        print("\n -> The token was not found among the shares", flush=True, end="")
-        return False
-
-    debugPrint(f"Found matching share with ID = {matchingItem.find("id").text}", startWithNewline=True, flush=True, end="")
-    if find_share_by_props([matchingItem], share_type=typeDict[share["type"]], uid_owner=share["owner"], path=share["path"], shareWith=(share["recipient"] if share["type"] == 'email' else None), permissions=share["permissions"], checker=True) is not None:
+    if find_share_by_props(shareList, share_type=typeDict[share["type"]], uid_owner=share["owner"], path=share["path"], shareWith=(share["recipient"] if share["type"] == 'email' else None), token=(share["token"] if "token" in share else None), permissions=share["permissions"], checker=True) is not None:
         return True
-
     return False
 
 
@@ -270,15 +263,15 @@ def main():
     shareList = fetch_sharelist()
     if User.CheckOnly:
         for share in shareDict:
-            if "token" in share:
-                print(f"\033[1m>>> Checking publicly shared file '{share["path"]}'{f" (with token '{share["token"]}')" if User.Debug else ""}...\033[0m", flush=True, end="")
+            if share["initiator"] == username:
+                print(f"\033[1m>>> Checking shared file '{share["path"]}'{f" (with token '{share["token"]}')" if User.Debug and "token" in share else ""}...\033[0m", flush=True, end="")
                 if check_share(share, shareList):
                     print(f"\033[32;1m{"\n  > " if User.Debug else ""}OK!\033[0;0m{"\n" if User.Debug else ""}")
                 else:
                     print("\n  \033[31;1m> FAIL!\033[0;0m\n")
                     failedList.append(share)
             else:
-                debugPrint(f"Skipping shared file '{share["path"]}' as it is not publicly accessible (does not have a token)")
+                debugPrint(f"Skipping shared file '{share["path"]}' as it is not initiated by logged in user ({share["initiator"]} ≠ {username})")
                 failedList.append(share)
     else:
         skipNext: bool = False
