@@ -1,6 +1,5 @@
 import json
 import argparse
-from typing import Optional
 from pathlib import Path
 
 debugEnabled: bool = False
