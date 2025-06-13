@@ -192,8 +192,8 @@ def main():
                         action='store_true', help='Toggles verbose mode')
     parser.add_argument('-p', '--progressive',
                         action='store_true', help='Make the migration completely interactive. The user needs to confirm before migrating each share (useless with --check)')
-    parser.add_argument('-d', '--dry-run',
-                        action='store_true', help='Display requests without sending them')
+    #parser.add_argument('-d', '--dry-run',
+    #                    action='store_true', help='Display requests without sending them')
     parser.add_argument('-c', '--check',
                         action='store_true', help='Check wheither the shares are correctly created (implies --dry-run)')
     parser.add_argument('-f', '--fix',
