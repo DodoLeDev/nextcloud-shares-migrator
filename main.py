@@ -1,7 +1,7 @@
 import json
 import yaml
 import defusedxml.ElementTree as ET
-from xml.etree.ElementTree import Element
+from xml.etree.ElementTree import Element, ParseError
 import requests
 import argparse
 from typing import Optional
@@ -41,6 +41,16 @@ def fetch_env(envFilename: str) -> tuple[Optional[str], Optional[str]]:
         password = yamlEnvStruct["password"] if 'password' in yamlEnvStruct else None
     return username, password
 
+def parse_error_from_response(OCSresponse: str) -> str:
+    try:
+        tree = ET.fromstring(OCSresponse)
+        errorNode = tree.find("meta/message")
+        if errorNode is not None and errorNode.text is not None:
+            return errorNode.text
+        else:
+            return "".join([f"{txt} " if not '\n' in txt else "" for txt in tree.itertext()])
+    except ParseError:
+        return ""
 
 def fetch_sharelist() -> list[Element]:
     requestShareUrl = f'{User.URL}/ocs/v2.php/apps/files_sharing/api/v1/shares'
@@ -53,6 +63,25 @@ def fetch_sharelist() -> list[Element]:
     debugPrint(f"Found {len(shareList)} shares from the user's perspective")
 
     return shareList
+
+def is_path_existent(path: str) -> bool:
+    debugPrint("Checking if file exists...", startWithNewline=True)
+
+    requestFileUrl = f'{User.URL}/remote.php/dav/files/{User.Session.auth[0]}{path}'
+
+    debugPrint("PROPFIND>", requestFileUrl, end="")
+    returnFileReq = User.Session.request(method='PROPFIND', url=requestFileUrl, headers={"OCS-APIRequest": "true"})
+
+    match returnFileReq.status_code:
+        case 200 | 207:
+            return True
+        case 404:
+            debugPrint("File not found", startWithNewline=True, end="")
+            return False
+
+    debugPrint(f"Unknown return code ({returnFileReq.status_code})", startWithNewline=True, end="")
+    return False
+
 
 def find_share_by_props(
     shareList: list[Element],
@@ -86,7 +115,7 @@ def find_share_by_props(
         return None
 
 def check_share(share: dict, shareList: list[Element]) -> bool:
-    if find_share_by_props(shareList, share_type=typeDict[share["type"]], uid_owner=share["owner"], path=share["path"], shareWith=(share["recipient"] if share["type"] == 'email' else None), token=(share["token"] if "token" in share else None), permissions=share["permissions"], checker=True) is not None:
+    if is_path_existent(share["path"]) and find_share_by_props(shareList, share_type=typeDict[share["type"]], uid_owner=share["owner"], path=share["path"], shareWith=(share["recipient"] if share["type"] == 'email' else None), token=(share["token"] if "token" in share else None), permissions=share["permissions"], checker=True) is not None:
         return True
     return False
 
@@ -114,8 +143,8 @@ def create_share(path: str, plainType: str, shareWith: Optional[str], permission
             case 200:
                 print("\033[32;1mOK!\033[0;0m")
             case _:
-                debugPrint(createShareReq.status_code, f"\n{createShareReq.text}")
                 print("\033[31;1mFAIL!\033[0;0m")
+                print(f"\033[31m >> {f"({createShareReq.status_code}) " if User.Debug else ""}{parse_error_from_response(createShareReq.text)}\033[0m")
                 return False, False
 
     if token is not None:
